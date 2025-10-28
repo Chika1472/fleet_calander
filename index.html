@@ -5,22 +5,33 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>플릿 일정 관리</title>
     <link href="https://cdn.jsdelivr.net/npm/fullcalendar@6.1.10/index.global.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard/dist/web/static/pretendard.css">
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@picocss/pico@1.5.10/css/pico.min.css">
     <link rel="stylesheet" href="styles.css">
 </head>
-<body>
-    <main class="container">
-        <header>
+<body class="app-shell">
+    <main class="app-container">
+        <header class="hero">
+            <span class="eyebrow">Fleet Command Planner</span>
             <h1>플릿 일정 캘린더</h1>
-            <p class="subtitle">날짜와 시간을 드래그하여 선택한 뒤, 세부 정보를 입력해 일정을 기록하세요.</p>
+            <p class="subtitle">차분한 캘린더에서 시간대를 선택하고, 필요한 세부 정보를 더해 플릿 운용을 계획하세요.</p>
         </header>
 
-        <section class="grid">
-            <article>
+        <section class="workspace" id="workspace">
+            <article class="glass-card calendar-card">
                 <div id="calendar"></div>
             </article>
-            <article>
-                <form id="event-form">
+
+            <aside id="detail-panel" class="glass-card detail-panel" aria-hidden="true" hidden>
+                <div class="panel-header">
+                    <div>
+                        <span class="panel-eyebrow">선택한 일정</span>
+                        <h2>시간과 세부 정보 입력</h2>
+                    </div>
+                    <button type="button" id="close-panel" class="panel-close" aria-label="입력 패널 닫기"></button>
+                </div>
+
+                <form id="event-form" class="form-card">
                     <fieldset>
                         <legend>선택한 시간</legend>
                         <label>
@@ -56,16 +67,18 @@
                     <div class="button-group">
                         <button type="submit" id="add-event" disabled>일정 추가</button>
                     </div>
-                    <p id="status" role="status"></p>
+                    <p id="status" role="status" aria-live="polite"></p>
                 </form>
-                <section id="summary-card" aria-live="polite">
-                    <h2>최근 일정 요약</h2>
+
+                <section id="summary-card" class="summary-card" aria-live="polite">
+                    <h3>최근 일정 요약</h3>
                     <div class="summary-body">
-                        <p>날짜/시간을 선택한 후 일정을 추가하면 요약이 표시됩니다.</p>
+                        <p>날짜와 시간을 선택하면 요약이 여기에 표시됩니다.</p>
                     </div>
                 </section>
-            </article>
+            </aside>
         </section>
+        <div id="panel-backdrop" class="panel-backdrop" hidden></div>
     </main>
 
     <script src="https://cdn.jsdelivr.net/npm/fullcalendar@6.1.10/index.global.min.js"></script>

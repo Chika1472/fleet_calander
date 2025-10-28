@@ -1,5 +1,9 @@
 document.addEventListener("DOMContentLoaded", () => {
   const calendarEl = document.getElementById("calendar");
+  const workspace = document.getElementById("workspace");
+  const detailPanel = document.getElementById("detail-panel");
+  const closePanelButton = document.getElementById("close-panel");
+  const panelBackdrop = document.getElementById("panel-backdrop");
   const form = document.getElementById("event-form");
   const startInput = document.getElementById("start");
   const endInput = document.getElementById("end");
@@ -10,8 +14,10 @@ document.addEventListener("DOMContentLoaded", () => {
   const statusEl = document.getElementById("status");
   const summaryCard = document.getElementById("summary-card");
   const summaryBody = summaryCard.querySelector(".summary-body");
+  const compactLayoutMedia = window.matchMedia("(max-width: 1100px)");
 
   let selection = null;
+  let ignoreSelect = false;
 
   const calendar = new FullCalendar.Calendar(calendarEl, {
     initialView: "timeGridWeek",
@@ -26,11 +32,28 @@ document.addEventListener("DOMContentLoaded", () => {
       right: "dayGridMonth,timeGridWeek,timeGridDay,listWeek"
     },
     select(info) {
-      selection = info;
-      startInput.value = formatDateTime(info.start);
-      endInput.value = formatDateTime(info.end);
-      addEventButton.disabled = false;
-      statusEl.textContent = "세부 정보를 입력한 후 일정을 추가하세요.";
+      if (ignoreSelect) {
+        ignoreSelect = false;
+        return;
+      }
+      prepareSelection(info.start, info.end);
+      openPanel();
+    },
+    dateClick(info) {
+      const start = info.date;
+      const end = info.allDay
+        ? new Date(start.getTime() + 24 * 60 * 60 * 1000)
+        : new Date(start.getTime() + 60 * 60 * 1000);
+
+      prepareSelection(start, end);
+      openPanel();
+
+      ignoreSelect = true;
+      calendar.select({
+        start,
+        end,
+        allDay: info.allDay
+      });
     },
     eventClick(info) {
       info.jsEvent.preventDefault();
@@ -45,6 +68,35 @@ document.addEventListener("DOMContentLoaded", () => {
   });
 
   calendar.render();
+
+  if (closePanelButton) {
+    closePanelButton.addEventListener("click", () => {
+      closePanel();
+    });
+  }
+
+  panelBackdrop?.addEventListener("click", () => {
+    closePanel();
+  });
+
+  const handleCompactChange = (event) => {
+    if (!event.matches && panelBackdrop) {
+      panelBackdrop.classList.remove("is-visible");
+      panelBackdrop.hidden = true;
+    }
+  };
+
+  if (typeof compactLayoutMedia.addEventListener === "function") {
+    compactLayoutMedia.addEventListener("change", handleCompactChange);
+  } else if (typeof compactLayoutMedia.addListener === "function") {
+    compactLayoutMedia.addListener(handleCompactChange);
+  }
+
+  document.addEventListener("keydown", (event) => {
+    if (event.key === "Escape" && !detailPanel.hidden) {
+      closePanel();
+    }
+  });
 
   form.addEventListener("submit", (event) => {
     event.preventDefault();
@@ -70,9 +122,11 @@ document.addEventListener("DOMContentLoaded", () => {
     addEventButton.disabled = true;
 
     renderSummary(eventData);
-    statusEl.textContent = "일정이 추가되었습니다. 오른쪽 요약을 확인하세요.";
+    statusEl.textContent = "일정이 추가되었습니다. 아래 요약을 확인하세요.";
 
     form.reset();
+    startInput.value = "";
+    endInput.value = "";
   });
 
   function formatDateTime(date) {
@@ -80,6 +134,60 @@ document.addEventListener("DOMContentLoaded", () => {
       dateStyle: "medium",
       timeStyle: "short"
     }).format(date);
+  }
+
+  function openPanel() {
+    if (detailPanel.hidden) {
+      detailPanel.hidden = false;
+      requestAnimationFrame(() => {
+        detailPanel.classList.add("is-visible");
+      });
+    } else {
+      detailPanel.classList.add("is-visible");
+    }
+
+    detailPanel.setAttribute("aria-hidden", "false");
+    workspace.classList.add("panel-open");
+
+    if (panelBackdrop && compactLayoutMedia.matches) {
+      panelBackdrop.hidden = false;
+      requestAnimationFrame(() => {
+        panelBackdrop.classList.add("is-visible");
+      });
+    }
+  }
+
+  function closePanel() {
+    detailPanel.classList.remove("is-visible");
+    detailPanel.setAttribute("aria-hidden", "true");
+    workspace.classList.remove("panel-open");
+
+    if (panelBackdrop) {
+      panelBackdrop.classList.remove("is-visible");
+    }
+
+    setTimeout(() => {
+      detailPanel.hidden = true;
+      if (panelBackdrop) {
+        panelBackdrop.hidden = true;
+      }
+    }, 240);
+
+    selection = null;
+    calendar.unselect();
+    addEventButton.disabled = true;
+    form.reset();
+    startInput.value = "";
+    endInput.value = "";
+    statusEl.textContent = "";
+  }
+
+  function prepareSelection(start, end) {
+    selection = { start, end };
+    startInput.value = formatDateTime(start);
+    endInput.value = formatDateTime(end);
+    addEventButton.disabled = false;
+    statusEl.textContent = "세부 정보를 입력한 후 일정을 추가하세요.";
   }
 
   function renderSummary(eventData) {
