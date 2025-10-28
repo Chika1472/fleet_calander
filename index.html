@@ -21,14 +21,12 @@
             <article class="glass-card calendar-card">
                 <div id="calendar"></div>
             </article>
-        </section>
 
-        <div id="detail-modal" class="detail-modal" role="dialog" aria-modal="true" aria-hidden="true" aria-labelledby="detail-modal-title" hidden>
-            <div class="glass-card detail-panel" role="document">
+            <aside id="detail-panel" class="glass-card detail-panel" aria-hidden="true" hidden>
                 <div class="panel-header">
                     <div>
                         <span class="panel-eyebrow">선택한 일정</span>
-                        <h2 id="detail-modal-title">시간과 세부 정보 입력</h2>
+                        <h2>시간과 세부 정보 입력</h2>
                     </div>
                     <button type="button" id="close-panel" class="panel-close" aria-label="입력 패널 닫기"></button>
                 </div>
@@ -78,8 +76,9 @@
                         <p>날짜와 시간을 선택하면 요약이 여기에 표시됩니다.</p>
                     </div>
                 </section>
-            </div>
-        </div>
+            </aside>
+        </section>
+        <div id="panel-backdrop" class="panel-backdrop" hidden></div>
     </main>
 
     <script src="https://cdn.jsdelivr.net/npm/fullcalendar@6.1.10/index.global.min.js"></script>

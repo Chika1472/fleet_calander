@@ -31,16 +31,6 @@ body.app-shell {
     position: relative;
 }
 
-body.app-shell.modal-open {
-    overflow: hidden;
-}
-
-body.app-shell.modal-open .hero,
-body.app-shell.modal-open .workspace {
-    filter: blur(8px);
-    pointer-events: none;
-}
-
 body.app-shell::before {
     content: "";
     position: fixed;
@@ -62,7 +52,6 @@ body.app-shell::before {
     flex-direction: column;
     gap: 0.5rem;
     margin-bottom: 2.5rem;
-    transition: filter 0.32s ease;
 }
 
 .eyebrow {
@@ -90,7 +79,11 @@ body.app-shell::before {
     display: grid;
     grid-template-columns: minmax(0, 1fr);
     gap: 2rem;
-    transition: filter 0.32s ease;
+    transition: grid-template-columns 0.3s ease;
+}
+
+.workspace.panel-open {
+    grid-template-columns: minmax(0, 1.1fr) minmax(0, 0.9fr);
 }
 
 .glass-card {
@@ -125,61 +118,24 @@ body.app-shell::before {
     min-width: 0;
 }
 
-.detail-modal {
-    position: fixed;
-    inset: 0;
-    display: grid;
-    place-items: center;
-    padding: clamp(1.5rem, 5vw, 3.5rem);
-    background: rgba(12, 26, 48, 0.25);
-    backdrop-filter: blur(18px);
-    -webkit-backdrop-filter: blur(18px);
-    opacity: 0;
-    pointer-events: none;
-    transition: opacity 0.32s ease;
-    z-index: 10;
-}
-
-.detail-modal[hidden] {
-    display: none !important;
-}
-
-.detail-modal.is-visible {
-    opacity: 1;
-    pointer-events: auto;
-}
-
-.detail-modal .detail-panel {
-    transform: translateY(16px) scale(0.97);
-    opacity: 0;
-    transition: transform 0.34s ease, opacity 0.34s ease;
-}
-
-.detail-modal.is-visible .detail-panel {
-    transform: translateY(0) scale(1);
-    opacity: 1;
-}
-
 
 .detail-panel {
-    padding: clamp(1.8rem, 1.8rem + 1vw, 2.4rem);
+    padding: 1.8rem;
     display: flex;
     flex-direction: column;
     gap: 1.5rem;
-    width: min(640px, 100%);
-    max-height: min(90vh, 720px);
-    overflow: auto;
-    scrollbar-width: thin;
-    scrollbar-color: rgba(0, 0, 0, 0.15) transparent;
+    opacity: 0;
+    transform: translateY(12px);
+    transition: opacity 0.28s ease, transform 0.28s ease;
 }
 
-.detail-panel::-webkit-scrollbar {
-    width: 8px;
+.detail-panel[hidden] {
+    display: none !important;
 }
 
-.detail-panel::-webkit-scrollbar-thumb {
-    background: rgba(0, 0, 0, 0.15);
-    border-radius: 999px;
+.detail-panel.is-visible {
+    opacity: 1;
+    transform: translateY(0);
 }
 
 .panel-header {
@@ -431,23 +387,47 @@ body.app-shell::before {
     overflow: hidden;
 }
 
+@media (max-width: 1100px) {
+    .workspace.panel-open {
+        grid-template-columns: minmax(0, 1fr);
+    }
+
+    .detail-panel {
+        position: fixed;
+        inset: auto 0 0;
+        margin: 0 1rem 1.5rem;
+        z-index: 3;
+    }
+}
+
 @media (max-width: 720px) {
     body.app-shell {
         padding: 3rem 1rem 4rem;
     }
 
-    .detail-modal {
-        padding: 1rem;
-    }
-
     .detail-panel {
         padding: 1.5rem;
-        width: min(100%, 520px);
-        max-height: min(92vh, 640px);
     }
 
     .form-card,
     .summary-card {
-        padding: 1.4rem;
+        padding: 1.5rem;
     }
+}
+
+.panel-backdrop {
+    position: fixed;
+    inset: 0;
+    background: rgba(10, 17, 35, 0.25);
+    backdrop-filter: blur(4px);
+    -webkit-backdrop-filter: blur(4px);
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity 0.25s ease;
+    z-index: 2;
+}
+
+.panel-backdrop.is-visible {
+    opacity: 1;
+    pointer-events: auto;
 }
