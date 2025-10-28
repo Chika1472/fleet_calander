@@ -1,5 +1,9 @@
 document.addEventListener("DOMContentLoaded", () => {
   const calendarEl = document.getElementById("calendar");
+  const workspace = document.getElementById("workspace");
+  const heroSection = document.querySelector(".hero");
+  const detailModal = document.getElementById("detail-modal");
+  const closePanelButton = detailModal?.querySelector("#close-panel");
   const form = document.getElementById("event-form");
   const startInput = document.getElementById("start");
   const endInput = document.getElementById("end");
@@ -12,6 +16,7 @@ document.addEventListener("DOMContentLoaded", () => {
   const summaryBody = summaryCard.querySelector(".summary-body");
 
   let selection = null;
+  let ignoreSelect = false;
 
   const calendar = new FullCalendar.Calendar(calendarEl, {
     initialView: "timeGridWeek",
@@ -26,11 +31,28 @@ document.addEventListener("DOMContentLoaded", () => {
       right: "dayGridMonth,timeGridWeek,timeGridDay,listWeek"
     },
     select(info) {
-      selection = info;
-      startInput.value = formatDateTime(info.start);
-      endInput.value = formatDateTime(info.end);
-      addEventButton.disabled = false;
-      statusEl.textContent = "세부 정보를 입력한 후 일정을 추가하세요.";
+      if (ignoreSelect) {
+        ignoreSelect = false;
+        return;
+      }
+      prepareSelection(info.start, info.end);
+      openPanel();
+    },
+    dateClick(info) {
+      const start = info.date;
+      const end = info.allDay
+        ? new Date(start.getTime() + 24 * 60 * 60 * 1000)
+        : new Date(start.getTime() + 60 * 60 * 1000);
+
+      prepareSelection(start, end);
+      openPanel();
+
+      ignoreSelect = true;
+      calendar.select({
+        start,
+        end,
+        allDay: info.allDay
+      });
     },
     eventClick(info) {
       info.jsEvent.preventDefault();
@@ -45,6 +67,24 @@ document.addEventListener("DOMContentLoaded", () => {
   });
 
   calendar.render();
+
+  if (closePanelButton) {
+    closePanelButton.addEventListener("click", () => {
+      closePanel();
+    });
+  }
+
+  detailModal?.addEventListener("click", (event) => {
+    if (event.target === detailModal) {
+      closePanel();
+    }
+  });
+
+  document.addEventListener("keydown", (event) => {
+    if (event.key === "Escape" && detailModal && !detailModal.hidden) {
+      closePanel();
+    }
+  });
 
   form.addEventListener("submit", (event) => {
     event.preventDefault();
@@ -70,9 +110,11 @@ document.addEventListener("DOMContentLoaded", () => {
     addEventButton.disabled = true;
 
     renderSummary(eventData);
-    statusEl.textContent = "일정이 추가되었습니다. 오른쪽 요약을 확인하세요.";
+    statusEl.textContent = "일정이 추가되었습니다. 아래 요약을 확인하세요.";
 
     form.reset();
+    startInput.value = "";
+    endInput.value = "";
   });
 
   function formatDateTime(date) {
@@ -80,6 +122,62 @@ document.addEventListener("DOMContentLoaded", () => {
       dateStyle: "medium",
       timeStyle: "short"
     }).format(date);
+  }
+
+  function openPanel() {
+    if (!detailModal) {
+      return;
+    }
+
+    if (detailModal.hidden) {
+      detailModal.hidden = false;
+      requestAnimationFrame(() => {
+        detailModal.classList.add("is-visible");
+      });
+    } else {
+      detailModal.classList.add("is-visible");
+    }
+
+    detailModal.setAttribute("aria-hidden", "false");
+    document.body.classList.add("modal-open");
+    workspace?.setAttribute("aria-hidden", "true");
+    heroSection?.setAttribute("aria-hidden", "true");
+
+    window.setTimeout(() => {
+      fleetInput?.focus();
+    }, 200);
+  }
+
+  function closePanel() {
+    if (!detailModal) {
+      return;
+    }
+
+    detailModal.classList.remove("is-visible");
+    detailModal.setAttribute("aria-hidden", "true");
+    document.body.classList.remove("modal-open");
+    workspace?.removeAttribute("aria-hidden");
+    heroSection?.removeAttribute("aria-hidden");
+
+    setTimeout(() => {
+      detailModal.hidden = true;
+    }, 280);
+
+    selection = null;
+    calendar.unselect();
+    addEventButton.disabled = true;
+    form.reset();
+    startInput.value = "";
+    endInput.value = "";
+    statusEl.textContent = "";
+  }
+
+  function prepareSelection(start, end) {
+    selection = { start, end };
+    startInput.value = formatDateTime(start);
+    endInput.value = formatDateTime(end);
+    addEventButton.disabled = false;
+    statusEl.textContent = "세부 정보를 입력한 후 일정을 추가하세요.";
   }
 
   function renderSummary(eventData) {
